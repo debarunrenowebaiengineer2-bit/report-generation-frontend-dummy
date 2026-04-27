@@ -12,7 +12,7 @@ st.sidebar.header("🔧 Configuration")
 
 backend_url = st.sidebar.text_input(
     "Backend URL",
-    value="http://localhost:8000"
+    value="http://72.62.247.229:8004"
 )
 
 apify_token = st.sidebar.text_input(
