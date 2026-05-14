@@ -12,7 +12,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-API_BASE_URL = "http://72.62.247.229:8004/docs"
+API_BASE_URL = "http://72.62.247.229:8004"
 
 # ==========================================
 # High-End Custom CSS
