@@ -1,162 +1,164 @@
 import streamlit as st
-from api.client import APIClient
-from ui.forms import website_form, instagram_form, visual_form
-from ui.renderers import render_section, render_full_report, render_json
+import requests
+import streamlit.components.v1 as components
 
-st.set_page_config(page_title="Digital Presence Dashboard", layout="wide")
-
-st.title("📊 Digital Presence Report Dashboard")
-
-# Sidebar config
-st.sidebar.header("🔧 Configuration")
-
-backend_url = st.sidebar.text_input(
-    "Backend URL",
-    value="http://72.62.247.229:8004"
+# ==========================================
+# Premium App Configuration
+# ==========================================
+st.set_page_config(
+    page_title="Digital Presence Auditor",
+    page_icon="💎",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-apify_token = st.sidebar.text_input(
-    "Apify Token",
-    type="password",
-    placeholder="Paste your Apify API key here"
-)
+API_BASE_URL = "http://localhost:8000"
 
-st.sidebar.markdown("---")
+# ==========================================
+# High-End Custom CSS
+# ==========================================
+st.markdown("""
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+        
+        html, body, [class*="css"] {
+            font-family: 'Inter', sans-serif;
+            color: #1e293b;
+        }
 
-st.sidebar.subheader("⚙️ Setup Guide")
-st.sidebar.markdown("""
-1. Get Apify API Token  
-2. Replace actor names in backend  
-3. Start FastAPI server  
-4. Enter token here  
-5. Run analysis  
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        header {visibility: hidden;}
 
-**Actor placeholders (replace in backend):**
-- https://console.apify.com/actors/3R9pWxyCy9C2hRJfY/input?addFromActorId=3R9pWxyCy9C2hRJfY
-- https://console.apify.com/actors/dSCLg0C3YEZ83HzYX/input?addFromActorId=dSCLg0C3YEZ83HzYX
-- https://console.apify.com/actors/jWD4G57HhqYY0mFhd/input?addFromActorId=jWD4G57HhqYY0mFhd
-- https://console.apify.com/actors/yUvj8W0M4T0HhZKyA?addFromActorId=yUvj8W0M4T0HhZKyA  
-""")
+        .stApp { background-color: #fcfcfd; }
 
-client = APIClient(backend_url)
+        /* Sidebar Styling */
+        [data-testid="stSidebar"] {
+            background-color: #0f172a;
+            color: white;
+        }
+        [data-testid="stSidebar"] * {
+            color: #f1f5f9 !important;
+        }
 
-tabs = st.tabs([
-    "🏠 Overview",
-    "🌐 Website Audit",
-    "📸 Instagram Audit",
-    "🎨 Visual Brand Match"
-])
+        /* Form / Container Styling */
+        div[data-testid="stForm"] {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            max-width: 900px;
+            margin: 0 auto;
+        }
 
-# -----------------------------
-# Overview
-# -----------------------------
-with tabs[0]:
-    st.header("Overview")
-    st.info("Use the tabs to generate reports.")
+        /* Buttons */
+        .stButton>button {
+            width: 100%;
+            border-radius: 10px;
+            height: 55px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            color: white;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .stButton>button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4);
+        }
 
-# -----------------------------
-# Website Audit
-# -----------------------------
-with tabs[1]:
-    st.header("Website Audit")
+        .main-title {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 2rem;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
-    form_data = website_form(apify_token)
+# ==========================================
+# Helper Function
+# ==========================================
+def run_audit(endpoint: str, payload: dict = None, files: dict = None):
+    with st.spinner("✨ AI is analyzing... please wait."):
+        try:
+            if files:
+                response = requests.post(f"{API_BASE_URL}{endpoint}", files=files)
+            else:
+                response = requests.post(f"{API_BASE_URL}{endpoint}", json=payload)
+                
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("success"):
+                    st.toast("Analysis Complete!", icon="✅")
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    st.markdown('<div style="background: white; border-radius: 20px; border: 1px solid #e2e8f0; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">', unsafe_allow_html=True)
+                    components.html(data.get("html_report", ""), height=1500, scrolling=True)
+                    st.markdown("</div>", unsafe_allow_html=True)
+                else:
+                    st.error(f"Error: {data.get('detail')}")
+            else:
+                st.error(f"Server Error: {response.status_code}")
+        except Exception as e:
+            st.error(f"Connection Failed: {e}")
 
+# ==========================================
+# Sidebar Module Selector
+# ==========================================
+with st.sidebar:
+    st.markdown("## 💎 Auditor Pro")
+    module = st.radio("Analysis Module", [
+        "🚀 Full Analysis",
+        "🌐 Website SEO",
+        "📸 Instagram Audit",
+        "🎨 Visual Brand Match"
+    ])
+    st.markdown("---")
+    apify_token = st.text_input("Apify Token", type="password")
 
-    st.divider()
+# ==========================================
+# UI Logic
+# ==========================================
+st.markdown(f'<h1 class="main-title">{module}</h1>', unsafe_allow_html=True)
 
-    st.subheader("Individual Sections")
+if not apify_token and module != "🎨 Visual Brand Match":
+    st.info("👈 Please enter your Apify Token in the sidebar to begin.")
+else:
+    with st.form("audit_inputs"):
+        if module == "🚀 Full Analysis":
+            domain = st.text_input("Domain", placeholder="pureorganiczone.com")
+            ig_user = st.text_input("Instagram Username", placeholder="pureorganiczone")
+            if st.form_submit_button("GENERATE COMPLETE PDF-STYLE REPORT"):
+                run_audit("/report/generate-full", {
+                    "domain": domain, "ig_username": ig_user.replace("@",""), 
+                    "apify_token": apify_token
+                })
 
-    if st.button("Authority & Visibility"):
-        with st.spinner("Fetching Authority & Visibility section..."):
-            try:
-                res = client.website_section("authority-visibility", form_data)
-                render_section(res)
-            except Exception as e:
-                st.error(f"Failed to load Authority & Visibility: {e}")
+        elif module == "🌐 Website SEO":
+            domain = st.text_input("Domain", placeholder="pureorganiczone.com")
+            if st.form_submit_button("ANALYZE WEBSITE ANATOMY"):
+                run_audit("/report/generate-seo", {"domain": domain, "apify_token": apify_token})
 
-    if st.button("AI Visibility"):
-        with st.spinner("Fetching AI Visibility section..."):
-            try:
-                res = client.website_section("ai-visibility", form_data)
-                render_section(res)
-            except Exception as e:
-                st.error(f"Failed to load AI Visibility: {e}")
+        elif module == "📸 Instagram Audit":
+            ig_user = st.text_input("Username", placeholder="pureorganiczone")
+            limit = st.slider("Posts to analyze", 10, 50, 20)
+            if st.form_submit_button("ANALYZE SOCIAL ANATOMY"):
+                run_audit("/report/generate-instagram", {
+                    "ig_username": ig_user.replace("@",""), 
+                    "ig_results_limit": limit, 
+                    "apify_token": apify_token
+                })
 
-    if st.button("Keyword Intent"):
-        with st.spinner("Fetching Keyword Intent section..."):
-            try:
-                res = client.website_section("keyword-intent", form_data)
-                render_section(res)
-            except Exception as e:
-                st.error(f"Failed to load Keyword Intent: {e}")
-
-    if st.button("Technical Health"):
-        with st.spinner("Fetching Technical Health section..."):
-            try:
-                res = client.website_section("technical-health", form_data)
-                render_section(res)
-            except Exception as e:
-                st.error(f"Failed to load Technical Health: {e}")
-
-    if st.button("Backlink Profile"):
-        with st.spinner("Fetching Backlink Profile section..."):
-            try:
-                res = client.website_section("backlink-profile", form_data)
-                render_section(res)
-            except Exception as e:
-                st.error(f"Failed to load Backlink Profile: {e}")
-
-# -----------------------------
-# Instagram Audit
-# -----------------------------
-with tabs[2]:
-    st.header("Instagram Audit")
-
-    form_data = instagram_form(apify_token)
-
-
-    st.divider()
-
-    if st.button("Profile Section"):
-        with st.spinner("Fetching Instagram Profile section..."):
-            try:
-                res = client.instagram_section("profile", form_data)
-                render_section(res)
-            except Exception as e:
-                st.error(f"Failed to load Profile section: {e}")
-
-    if st.button("Follower Quality"):
-        with st.spinner("Fetching Follower Quality section..."):
-            try:
-                res = client.instagram_section("follower-quality", form_data)
-                render_section(res)
-            except Exception as e:
-                st.error(f"Failed to load Follower Quality section: {e}")
-
-    if st.button("Engagement"):
-        with st.spinner("Fetching Engagement section..."):
-            try:
-                res = client.instagram_section("engagement", form_data)
-                render_section(res)
-            except Exception as e:
-                st.error(f"Failed to load Engagement section: {e}")
-
-# -----------------------------
-# Visual Brand Match
-# -----------------------------
-with tabs[3]:
-    st.header("Visual Brand Match")
-
-    website_file, insta_file = visual_form()
-
-    if st.button("Analyze Brand Match"):
-        if website_file and insta_file:
-            with st.spinner("Analyzing brand match..."):
-                try:
-                    res = client.visual_brand_match(website_file, insta_file)
-                    render_json(res)
-                except Exception as e:
-                    st.error(f"Failed to analyze brand match: {e}")
-        else:
-            st.warning("Upload both images.")
+        elif module == "🎨 Visual Brand Match":
+            col1, col2 = st.columns(2)
+            with col1: web_img = st.file_uploader("Website Screenshot", type=["png", "jpg"])
+            with col2: ig_img = st.file_uploader("Instagram Screenshot", type=["png", "jpg"])
+            if st.form_submit_button("RUN VISION AI COMPARISON"):
+                if web_img and ig_img:
+                    files = {
+                        "website_screenshot": (web_img.name, web_img, web_img.type),
+                        "instagram_screenshot": (ig_img.name, ig_img, ig_img.type)
+                    }
+                    run_audit("/report/visual/brand-match", files=files)
